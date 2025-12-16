@@ -1,8 +1,10 @@
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, HTTPException, Depends, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 import os
 import random
 from dotenv import load_dotenv
@@ -29,6 +31,7 @@ app.add_middleware(
 )
 
 # Services
+drive_service: Optional[DriveService] = None
 try:
     drive_service = DriveService()
 except ValueError as e:
@@ -186,3 +189,20 @@ def proxy_image(file_id: str, authorized: bool = Depends(check_auth)):
     except Exception as e:
         print(f"Proxy Error: {e}")
         raise HTTPException(status_code=404, detail="Image not found")
+
+
+# Mount assets/static files
+# Vite builds to 'dist', and our Dockerfile copies 'frontend/dist' to 'backend/static'
+if os.path.isdir("static"):
+    app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+    # Also mount other top-level files like favicon.ico if they exist in static
+    # But for SPA, we mainly need to serve index.html for unknown routes
+
+
+@app.get("/{full_path:path}")
+def serve_spa(full_path: str):
+    # If not found in API or static assets, serve index.html
+    if os.path.exists("static/index.html"):
+        with open("static/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return Response(content="Frontend not found", status_code=404)
