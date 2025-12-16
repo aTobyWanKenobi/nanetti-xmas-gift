@@ -1,0 +1,56 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+
+    - name: Install Dependencies
+      run: |
+        cd backend
+        uv sync --all-extras --dev
+
+    - name: Lint with Ruff
+      run: |
+        cd backend
+        uv run ruff check .
+        uv run ruff format --check .
+
+    - name: Type Check with Pyright
+      run: |
+        cd backend
+        uv run pyright .
+
+    - name: Test with Pytest
+      run: |
+        cd backend
+        uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=100
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

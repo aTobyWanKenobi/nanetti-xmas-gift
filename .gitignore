@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# NanettApp Specific
+node_modules/
+dist/
+service_account.json
+key.json
+*.log

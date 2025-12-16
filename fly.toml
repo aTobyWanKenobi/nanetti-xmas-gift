@@ -1,0 +1,21 @@
+# fly.toml app configuration file generated for nanetti-xmas-gift on 2024-12-16T21:24:57+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "nanetti-xmas-gift"
+primary_region = "ams" # Amsterdam (good default for Europe)
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
