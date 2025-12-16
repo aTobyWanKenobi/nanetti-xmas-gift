@@ -4,7 +4,7 @@
 #
 
 app = "nanetti-xmas-gift"
-primary_region = "ams" # Amsterdam (good default for Europe)
+primary_region = "fra"
 
 [build]
   dockerfile = "Dockerfile"
