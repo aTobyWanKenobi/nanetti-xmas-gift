@@ -48,22 +48,18 @@ EMOTIONS = [
 
 CAPTIONS = {
     "happy": [
-        "Che gioia!",
+        "🎵 Happy happy happy 🎵",
         "Sorridi sempre così!",
-        "Un momento di pura felicità!",
+        "Puzzi!",
         "Che bello vederti felice!",
-        "La felicità ti dona!",
-        "Splendi come il sole!",
-        "Goditi questo momento!",
+        "Sciau belishima!",
     ],
     "romantic": [
-        "Amore mio...",
-        "Sei la mia vita.",
-        "Ogni momento con te è speciale.",
-        "Ti amo tantissimo!",
-        "Il mio cuore batte solo per te.",
-        "Sei il mio regalo più bello.",
-        "Sempre insieme.",
+        "TATAIIII",
+        "Sciau nana ❤️",
+        "Abrazo 🫂",
+        "Grattini!",
+        "Cucchiaiami",
     ],
     "sad": [
         "Passerà...",
@@ -71,17 +67,15 @@ CAPTIONS = {
         "Ricorda i momenti belli.",
         "Sono qui per te.",
         "Dopo la pioggia esce sempre il sole.",
-        "Non essere triste, amore.",
-        "Ti mando un bacio grande.",
+        "Ti mando un basho grande.",
     ],
     "angry": [
         "Respira...",
         "Calma e sangue freddo.",
-        "Domani è un altro giorno.",
         "Non ne vale la pena.",
         "Conta fino a dieci...",
         "Fai un bel respiro profondo.",
-        "Lascia andare la rabbia.",
+        "Avvia la macchina degli sganassoni",
     ],
 }
 
