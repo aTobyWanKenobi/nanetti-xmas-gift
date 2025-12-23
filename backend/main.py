@@ -174,12 +174,8 @@ def proxy_image(file_id: str, authorized: bool = Depends(check_auth)):
     if not drive_service:
         raise HTTPException(status_code=503, detail="Drive service unavailable")
     try:
-        file_stream = drive_service.download_file(file_id)
-        # Determine media type - for now assume jpeg or get from metadata if possible.
-        # But download_file returns BytesIO.
-        # Ideally we get mimeType from DriveService.list_files cache or query.
-        # For simplicity, default to image/jpeg
-        return StreamingResponse(file_stream, media_type="image/jpeg")
+        file_stream, media_type = drive_service.get_file_content(file_id)
+        return StreamingResponse(file_stream, media_type=media_type)
     except Exception as e:
         print(f"Proxy Error: {e}")
         raise HTTPException(status_code=404, detail="Image not found")
