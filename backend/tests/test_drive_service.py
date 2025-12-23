@@ -59,7 +59,7 @@ def test_get_random_photo_returns_file(drive_service):
     assert photo["id"] in ["1", "2"]
 
 
-def test_get_file_content_download_simple(drive_service):
+def test_get_file_content_stream(drive_service):
     # Test simple download path without checking for thumbnails
     mock_files = drive_service.service.files.return_value
     mock_get_req = mock_files.get.return_value
@@ -70,10 +70,17 @@ def test_get_file_content_download_simple(drive_service):
 
     with patch("services.drive_service.requests.get") as mock_get:
         mock_resp = MagicMock()
-        mock_resp.content = b"raw data"
+        # Mock iter_content for streaming
+        mock_resp.iter_content.return_value = [b"chunk1", b"chunk2"]
         mock_get.return_value = mock_resp
 
-        content, mime = drive_service.get_file_content("file1")
+        content_gen, mime = drive_service.get_file_content("file1")
 
         assert mime == "image/jpeg"
-        assert content.read() == b"raw data"
+        # Consume generator
+        full_content = b"".join(list(content_gen))
+        assert full_content == b"chunk1chunk2"
+
+        # Verify call arguments (abuse flag)
+        args, _ = mock_get.call_args
+        assert "acknowledgeAbuse=True" in args[0]
