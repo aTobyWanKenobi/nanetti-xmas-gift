@@ -76,7 +76,10 @@ def test_proxy_image_success(mock_drive_service):
     # Mock return value as BytesIO
     import io
 
-    mock_drive_service.download_file.return_value = io.BytesIO(b"image data")
+    mock_drive_service.get_file_content.return_value = (
+        io.BytesIO(b"image data"),
+        "image/jpeg",
+    )
 
     resp = client.get("/api/image/file123")
     assert resp.status_code == 200
