@@ -99,8 +99,8 @@ export default function PhotoDisplay({ emotionId, initialData, onComplete }) {
                 borderRadius: '4px',
                 boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
                 transform: 'rotate(-2deg)',
-                width: '100%',
-                maxWidth: '350px',
+                width: '90vw',
+                maxWidth: '500px',
                 position: 'relative'
             }}>
                 {data?.photo_url ? (

@@ -214,11 +214,31 @@ class DriveService:
                 download_url = f"{thumbnail_link}=s1600"
 
             try:
-                resp = requests.get(download_url)
+                # Add timeout to prevent hanging on bad thumbnails
+                resp = requests.get(download_url, timeout=5)
                 resp.raise_for_status()
+
+                # Validation: Check Content-Type
+                content_type = resp.headers.get("Content-Type", "")
+                if not content_type.startswith("image/"):
+                    logger.warning(
+                        f"Thumbnail had non-image Content-Type: {content_type}. Content preview: {resp.content[:100]}"
+                    )
+                    raise ValueError("Invalid Content-Type")
+
+                # Validation: Check if it's really an image
+                try:
+                    img_test = Image.open(io.BytesIO(resp.content))
+                    img_test.verify()
+                except Exception as e:
+                    logger.warning(f"Thumbnail bytes verification failed: {e}")
+                    raise ValueError("Invalid Image Bytes")
+
                 return io.BytesIO(resp.content), "image/jpeg"
             except Exception as e:
-                logger.warning(f"Thumbnail fetch failed, falling back to download: {e}")
+                logger.warning(
+                    f"Thumbnail fetch failed for file {file_id} ({e}), falling back to full download"
+                )
                 # Fallback to full download below
 
         # Fallback: Download full file

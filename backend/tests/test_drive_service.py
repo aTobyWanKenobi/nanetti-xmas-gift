@@ -80,14 +80,19 @@ def test_get_file_content_thumbnail(drive_service):
 
         mock_resp = MagicMock()
         mock_resp.content = b"thumbnail data"
+        mock_resp.headers = {"Content-Type": "image/jpeg"}
         mock_get.return_value = mock_resp
 
-        content, mime = drive_service.get_file_content("file1")
+        with patch("services.drive_service.Image.open") as mock_img_open:
+            mock_img = MagicMock()
+            mock_img_open.return_value = mock_img
 
-        assert mime == "image/jpeg"
-        assert content.read() == b"thumbnail data"
-        # Verify it called the resized link
-        mock_get.assert_called_with("http://thumb/foo=s1600")
+            content, mime = drive_service.get_file_content("file1")
+
+            assert mime == "image/jpeg"
+            assert content.read() == b"thumbnail data"
+            # Verify it called the resized link
+            mock_get.assert_called_with("http://thumb/foo=s1600", timeout=5)
 
 
 def test_get_file_content_fallback_download(drive_service):
@@ -108,3 +113,40 @@ def test_get_file_content_fallback_download(drive_service):
 
         assert mime == "image/png"
         assert content.read() == b"raw data"
+
+
+def test_get_file_content_thumbnail_invalid_fallback(drive_service):
+    # Test fallback when thumbnail exists but returns invalid content (e.g. login page)
+    with patch("services.drive_service.requests.get") as mock_get:
+        # Mock file metadata response
+        mock_files = drive_service.service.files.return_value
+        mock_get_req = mock_files.get.return_value
+        mock_get_req.execute.return_value = {
+            "id": "1",
+            "mimeType": "image/jpeg",
+            "thumbnailLink": "http://thumb/foo=s220",
+        }
+
+        # First response: Invalid (e.g. HTML)
+        bad_resp = MagicMock()
+        bad_resp.content = b"<html>Login</html>"
+        bad_resp.headers = {"Content-Type": "text/html"}
+
+        # Second response: Valid raw download
+        good_resp = MagicMock()
+        good_resp.content = b"raw image data"
+        # _download_raw doesn't check headers, just returns content
+
+        mock_get.side_effect = [bad_resp, good_resp]
+
+        content, mime = drive_service.get_file_content("file1")
+
+        # Should return raw data (fallback)
+        assert content.read() == b"raw image data"
+
+        # Verify both calls were made
+        assert mock_get.call_count == 2
+        # First call to thumbnail
+        mock_get.call_args_list[0].args[0] == "http://thumb/foo=s1600"
+        # Second call to API
+        assert "googleapis.com" in mock_get.call_args_list[1].args[0]
