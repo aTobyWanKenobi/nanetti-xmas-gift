@@ -3,8 +3,7 @@ import json
 import random
 import logging
 import threading
-import io
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Generator
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -135,11 +134,10 @@ class DriveService:
 
     def get_file_content(
         self, file_id: str, high_quality=True
-    ) -> tuple[io.BytesIO, str]:
+    ) -> tuple[Generator, str]:
         """
-        Downloads file content.
-        Simplified version: no thumbnails, no HEIC conversion.
-        Returns (content_stream, mime_type)
+        Downloads file content as a stream.
+        Returns (content_generator, mime_type)
         """
         # 1. Get file metadata to check type
         try:
@@ -154,24 +152,24 @@ class DriveService:
 
         mime_type = file_meta.get("mimeType", "application/octet-stream")
 
-        # Download full file
+        # Download full file stream
         logger.info(f"Downloading full file {file_id}")
-        raw_stream = self._download_raw(file_id)
+        stream = self._download_stream(file_id)
 
-        return raw_stream, mime_type
+        return stream, mime_type
 
-    def _download_raw(self, file_id: str) -> io.BytesIO:
+    def _download_stream(self, file_id: str) -> Generator:
         if not self.creds.valid:
             self.creds.refresh(Request())
 
-        url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
+        # acknowledgeAbuse=True to bypass large file virus scan limits
+        url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media&acknowledgeAbuse=True"
         headers = {"Authorization": f"Bearer {self.creds.token}"}
 
-        # Removed timeout=5 to ensure large files can download even if slow,
-        # or we could keep a generous timeout. Let's stick to default (requests default is no timeout)
-        # or a reasonable one.
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
 
-        # buffer in memory
-        return io.BytesIO(response.content)
+        # Stream content in chunks
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                yield chunk

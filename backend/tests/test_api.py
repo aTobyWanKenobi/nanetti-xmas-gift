@@ -73,13 +73,12 @@ def test_draw_photo_invalid_emotion():
 @patch("main.drive_service")
 def test_proxy_image_success(mock_drive_service):
     client.cookies.set("auth_token", SECRET_KEY)
-    # Mock return value as BytesIO
-    import io
 
-    mock_drive_service.get_file_content.return_value = (
-        io.BytesIO(b"image data"),
-        "image/jpeg",
-    )
+    # Mock generator return
+    def mock_gen():
+        yield b"image data"
+
+    mock_drive_service.get_file_content.return_value = (mock_gen(), "image/jpeg")
 
     resp = client.get("/api/image/file123")
     assert resp.status_code == 200
